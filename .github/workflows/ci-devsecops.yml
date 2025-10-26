@@ -19,6 +19,8 @@ jobs:
         uses: SonarSource/sonarqube-scan-action@v6
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      - name: Check SONAR_TOKEN is valid
+        run: curl -s -u "${{ secrets.SONAR_TOKEN }}:" https://sonarcloud.io/api/authentication/validate
 
       - name: Quality Gate
         id: qg
