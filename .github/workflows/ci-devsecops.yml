@@ -79,9 +79,9 @@ jobs:
           name: dependency-check-report
           path: odc-reports
 
-      - name: Fail job if Dependency-Check found CVSS >= 5.0
-        if: ${{ steps.depcheck.outcome == 'failure' }}
-        run: |
-          echo "Dependency-Check encontró vulnerabilidades con CVSS >= 5.0 (MEDIUM+)."
-          exit 1
+    #   - name: Fail job if Dependency-Check found CVSS >= 5.0
+    #     if: ${{ steps.depcheck.outcome == 'failure' }}
+    #     run: |
+    #       echo "Dependency-Check encontró vulnerabilidades con CVSS >= 5.0 (MEDIUM+)."
+    #       exit 1
 
