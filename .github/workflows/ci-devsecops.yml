@@ -1,0 +1,21 @@
+name: SAST - Sonar (smoke)
+
+on:
+  push:
+    branches: ['ci/devsecops']   
+  pull_request:
+    branches: ['ci/devsecops']
+  workflow_dispatch:
+
+jobs:
+  sonar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   
+
+      - name: SonarCloud scan
+        uses: SonarSource/sonarqube-scan-action@v4.1.0
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
