@@ -2,7 +2,7 @@ name: SAST - Sonar (smoke)
 
 on:
   push:
-    branches: ['ci/devsecops']   
+    branches: ['ci/devsecops']
   pull_request:
     branches: ['ci/devsecops']
   workflow_dispatch:
@@ -13,9 +13,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0   
-
-      - name: SonarCloud prueba
-        uses: SonarSource/sonarqube-scan-action@v5
+          fetch-depth: 0
+      - name: SonarCloud scan
+        uses: SonarSource/sonarqube-scan-action@v6   # ← v6
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
