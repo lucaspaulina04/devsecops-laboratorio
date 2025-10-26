@@ -14,7 +14,22 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
       - name: SonarCloud scan
-        uses: SonarSource/sonarqube-scan-action@v6   # ← v6
+        uses: SonarSource/sonarqube-scan-action@v6
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+      - name: Quality Gate
+        id: qg
+        uses: SonarSource/sonarqube-quality-gate-action@v1.2.0
+        with:
+          pollingTimeoutSec: 600
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+      - name: Fail if QG failed
+        if: ${{ steps.qg.outputs.quality-gate-status != 'PASSED' }}
+        run: |
+          echo "Quality Gate: ${{ steps.qg.outputs.quality-gate-status }}"
+          exit 1
