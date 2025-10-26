@@ -1,38 +1,87 @@
-name: SAST - Sonar (smoke)
+name: CI DevSecOps
 
 on:
   push:
-    branches: ['ci/devsecops', 'main']
+    branches: ['main']        
   pull_request:
-    branches: ['ci/devsecops', 'main']
+    branches: ['main']
   workflow_dispatch:
 
+permissions:
+  contents: read
+  security-events: write      
+
+concurrency:
+  group: ci-devsecops-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
-  sonar:
+  # SAST: SonarCloud
+  sast:
+    name: SAST (SonarCloud)
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
       - name: SonarCloud scan
         uses: SonarSource/sonarqube-scan-action@v6
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      - name: Check SONAR_TOKEN is valid
-        run: curl -s -u "${{ secrets.SONAR_TOKEN }}:" https://sonarcloud.io/api/authentication/validate
 
       - name: Quality Gate
         id: qg
         uses: SonarSource/sonarqube-quality-gate-action@v1.2.0
         with:
-            pollingTimeoutSec: 600
-            scanMetadataReportFile: .scannerwork/report-task.txt
+          pollingTimeoutSec: 600
+          scanMetadataReportFile: .scannerwork/report-task.txt
         env:
-            SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-            SONAR_HOST_URL: https://sonarcloud.io
-      - name: Fail if QG failed
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: https://sonarcloud.io
+
+      - name: Fail if Quality Gate failed
         if: ${{ steps.qg.outputs.quality-gate-status != 'PASSED' }}
         run: |
-            echo "Quality Gate: ${{ steps.qg.outputs.quality-gate-status }}"
-            exit 1
+          echo "Quality Gate: ${{ steps.qg.outputs.quality-gate-status }}"
+          exit 1
+
+  # SCA: OWASP Dependency-Check
+
+  sca:
+    name: SCA (OWASP Dependency-Check)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Dependency-Check (fail on CVSS >= 5.0)
+        id: depcheck
+        uses: dependency-check/Dependency-Check_Action@main
+        continue-on-error: true
+        with:
+          project: 'devsecops-lab'
+          path: '.'
+          format: 'HTML'
+          out: 'odc-reports'
+          args: >
+            --failOnCVSS 5.0
+            --enableRetired
+            --nvdApiKey ${{ secrets.NVD_API_KEY }}
+        env:
+          JAVA_HOME: /opt/jdk   
+
+      - name: Upload Dependency-Check report (HTML)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-check-report
+          path: odc-reports
+
+      - name: Fail job if Dependency-Check found CVSS >= 5.0
+        if: ${{ steps.depcheck.outcome == 'failure' }}
+        run: |
+          echo "Dependency-Check encontró vulnerabilidades con CVSS >= 5.0 (MEDIUM+)."
+          exit 1
+
