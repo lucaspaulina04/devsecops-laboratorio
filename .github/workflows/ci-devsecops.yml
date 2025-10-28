@@ -85,20 +85,22 @@ jobs:
     #       echo "Dependency-Check encontró vulnerabilidades con CVSS >= 5.0 (MEDIUM+)."
     #       exit 1
 
-  image_build:
-    name: Build Docker image (only build)
+  image_security:
+    name: Image Security (Trivy)
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Docker version (debug)
-        run: docker --version
+      - uses: actions/checkout@v4
 
       - name: Build image
         run: docker build -t movies:${{ github.sha }} .
 
-      - name: Show built image
-        run: |
-          docker image ls movies:${{ github.sha }}
-          docker history --no-trunc movies:${{ github.sha }} | head -n 20
+      - name: Trivy scan (fail on MEDIUM+)
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: 'movies:${{ github.sha }}'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH,MEDIUM'
+          exit-code: '1'
+          ignore-unfixed: false
