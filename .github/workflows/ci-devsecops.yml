@@ -85,3 +85,20 @@ jobs:
     #       echo "Dependency-Check encontró vulnerabilidades con CVSS >= 5.0 (MEDIUM+)."
     #       exit 1
 
+  image_build:
+    name: Build Docker image (only build)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Docker version (debug)
+        run: docker --version
+
+      - name: Build image
+        run: docker build -t movies:${{ github.sha }} .
+
+      - name: Show built image
+        run: |
+          docker image ls movies:${{ github.sha }}
+          docker history --no-trunc movies:${{ github.sha }} | head -n 20
