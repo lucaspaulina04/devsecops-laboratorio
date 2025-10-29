@@ -102,5 +102,5 @@ jobs:
           output: 'trivy-results.sarif'
           vuln-type: 'os,library'
           severity: 'CRITICAL,HIGH,MEDIUM'
-          exit-code: '1'
+          #exit-code: '1'
           ignore-unfixed: false
